@@ -1,0 +1,12 @@
+SUBIR ESTA VERSIÓN A GITHUB
+
+1. Abre tu repositorio en GitHub.
+2. Add file > Upload files.
+3. Sustituye los archivos existentes por los de esta carpeta.
+4. Pulsa Commit changes.
+5. Streamlit actualizará la aplicación automáticamente.
+
+CAMBIO DE URL (se hace en Streamlit, no en GitHub):
+App settings > General > App URL
+Prueba: encuesta-fiestas-moros-y-cristianos-2026
+Si no está disponible: encuesta-moros-cristianos-2026

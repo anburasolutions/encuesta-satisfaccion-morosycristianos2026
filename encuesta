@@ -1,0 +1,1403 @@
+# Encuesta Moros y Cristianos de Aspe 2026
+
+Aplicación web en **Streamlit + Supabase** con dos zonas dentro de la misma web:
+
+1. **Encuesta pública** para los festeros, optimizada para móvil.
+2. **Panel privado de Junta Directiva** con filtros, métricas, gráficos, comentarios, participación por comparsa, exportación CSV y generación opcional de enlaces únicos.
+
+La encuesta se ha diseñado como anónima: no pide nombre, apellidos, DNI, email ni teléfono.
+
+## Qué incluye
+
+- 8 comparsas: Sulayman, Alcana, Maqueda, Lanceros, Estudiantes, Aljau, Contrabandistas y Fauquies.
+- Perfil festero: comparsa, edad, antigüedad y cargo/responsabilidad.
+- Valoración general 1–5.
+- Valoración de 12 actos, con `No asistí / No puedo valorarlo` guardado como valor nulo y nunca como cero.
+- Acto mejor valorado y acto a revisar.
+- Pulsera festera con lógica condicional.
+- Preferencia sobre mover el Pasacalles del día 8 al día 7.
+- Propuesta de Media Fiesta 2027 en dos días.
+- Recomendación 0–10 y cálculo NPS.
+- Comentarios abiertos opcionales.
+- Panel con filtros por comparsa, edad, antigüedad y cargo.
+- Protección de privacidad: no muestra detalle con grupos menores de 5 respuestas (configurable).
+- Exportación CSV.
+- Generador de enlaces únicos de un solo uso sin almacenar identidad.
+
+## 1. Probar la web sin instalar Supabase
+
+La aplicación viene preparada en **modo demostración**.
+
+1. Instala Python 3.12 o superior.
+2. Abre una terminal dentro de esta carpeta.
+3. Crea un entorno virtual si quieres.
+4. Instala dependencias:
+
+```bash
+pip install -r requirements.txt
+```
+
+5. Copia:
+
+```text
+.streamlit/secrets.example.toml
+```
+
+como:
+
+```text
+.streamlit/secrets.toml
+```
+
+6. Ejecuta:
+
+```bash
+streamlit run app.py
+```
+
+En modo demo, el panel muestra datos ficticios para que puedas ver el aspecto de los gráficos.
+
+Acceso demo a Junta Directiva:
+
+- Usuario: `junta`
+- Contraseña: `demo2026` si no has creado `secrets.toml`; si lo has creado, usa la contraseña que pongas allí.
+
+## 2. Crear la base de datos en Supabase
+
+1. Crea un proyecto nuevo en Supabase.
+2. Entra en **SQL Editor**.
+3. Copia todo el contenido de `supabase_schema.sql`.
+4. Ejecuta el script.
+5. En el panel de Supabase, abre **Connect / API Keys** y copia:
+   - Project URL.
+   - Secret key de servidor (`sb_secret_...`) o equivalente de servicio.
+
+**Importante:** la secret key nunca debe ponerse en el código ni compartirse públicamente. Solo debe ir en los Secrets de Streamlit.
+
+## 3. Configurar la aplicación para datos reales
+
+En `.streamlit/secrets.toml` o en los Secrets de Streamlit Cloud:
+
+```toml
+DEMO_MODE = false
+SUPABASE_URL = "https://TU-PROYECTO.supabase.co"
+SUPABASE_SERVICE_KEY = "sb_secret_..."
+ADMIN_USER = "junta"
+ADMIN_PASSWORD = "UNA-CONTRASENA-LARGA-Y-UNICA"
+PUBLIC_APP_URL = "https://TU-APP.streamlit.app"
+REQUIRE_INVITE_TOKEN = false
+MIN_GROUP_SIZE = 5
+```
+
+## 4. Publicarla gratis en Streamlit Community Cloud
+
+La forma más sencilla es subir esta carpeta a un repositorio privado o público de GitHub y crear una app en Streamlit Community Cloud apuntando a `app.py`.
+
+Después, en **Settings > Secrets**, pega los valores de `secrets.toml`.
+
+La URL pública quedará parecida a:
+
+```text
+https://encuesta-aspe-2026.streamlit.app
+```
+
+La zona de Junta Directiva se abre con:
+
+```text
+https://encuesta-aspe-2026.streamlit.app/?view=admin
+```
+
+## 5. Enlace normal o enlaces únicos
+
+### Opción A · Enlace normal
+
+Deja:
+
+```toml
+REQUIRE_INVITE_TOKEN = false
+```
+
+Envías a todos los festeros la misma URL. Es la opción más sencilla.
+
+### Opción B · Enlaces únicos de un solo uso
+
+Pon:
+
+```toml
+REQUIRE_INVITE_TOKEN = true
+```
+
+Entra en el panel privado > **Invitaciones** y genera enlaces por comparsa. Descargarás un CSV con URLs como:
+
+```text
+https://...streamlit.app/?t=TOKEN_UNICO
+```
+
+La base de datos no guarda el token original: guarda su hash. Tampoco guarda nombre, email o DNI. Cuando el enlace se usa, queda marcado como utilizado.
+
+## 6. Participación real por comparsa
+
+En el panel > **Comparsas**, introduce el número de festeros invitados de cada comparsa. Así el panel calcula:
+
+```text
+Participación = respuestas / invitados × 100
+```
+
+## 7. Seguridad y privacidad
+
+- No se recogen datos identificativos directos en el formulario.
+- La base de datos tiene RLS activado.
+- No hay políticas públicas de lectura.
+- El acceso a todos los datos se hace desde el servidor Streamlit con una secret key.
+- El panel requiere usuario y contraseña.
+- Con filtros que dejan menos de 5 respuestas, se ocultan gráficos detallados y comentarios.
+- Los enlaces únicos no guardan la identidad del festero.
+
+## 8. Archivos
+
+- `app.py` — encuesta y panel.
+- `supabase_schema.sql` — tablas, índices, RLS y función de guardado.
+- `requirements.txt` — dependencias.
+- `.streamlit/config.toml` — colores y tema.
+- `.streamlit/secrets.example.toml` — ejemplo de configuración privada.
+
+## Siguiente mejora recomendada
+
+Cuando la versión básica esté publicada, las mejoras más útiles serían:
+
+1. Añadir el logotipo oficial de la Unión.
+2. Dominio propio, por ejemplo `encuesta.morosycristianosaspe.es`.
+3. Envío de emails personalizados con los enlaces únicos.
+4. Exportación Excel/PDF para Junta Directiva.
+5. Resumen automático de comentarios abiertos por temas.
+
+streamlit>=1.45
+supabase>=2.15
+pandas>=2.2
+numpy>=2.0
+plotly>=6.0
+
+SUBIDA A GITHUB
+
+Sube a la RAIZ del repositorio estos archivos y carpetas:
+- app.py
+- requirements.txt
+- README.md
+- supabase_schema.sql
+- .gitignore
+- carpeta .streamlit
+
+NO subas nunca un archivo llamado .streamlit/secrets.toml.
+El archivo secrets.example.toml sí se puede subir: no contiene claves reales.
+
+-- =============================================================
+-- ENCUESTA MOROS Y CRISTIANOS DE ASPE 2026
+-- Esquema mínimo para Supabase
+-- =============================================================
+
+create extension if not exists pgcrypto;
+
+-- 1) Respuestas anónimas. Los campos de segmentación se duplican fuera
+-- del JSON para facilitar filtros; no se guarda nombre, DNI, email ni teléfono.
+create table if not exists public.responses (
+    id uuid primary key default gen_random_uuid(),
+    created_at timestamptz not null default now(),
+    comparsa text not null,
+    edad text not null,
+    antiguedad text not null,
+    cargo text not null,
+    answers jsonb not null
+);
+
+create index if not exists responses_created_at_idx on public.responses (created_at desc);
+create index if not exists responses_comparsa_idx on public.responses (comparsa);
+create index if not exists responses_edad_idx on public.responses (edad);
+create index if not exists responses_antiguedad_idx on public.responses (antiguedad);
+create index if not exists responses_cargo_idx on public.responses (cargo);
+
+-- 2) Invitaciones únicas. Solo se almacena el hash del token y la comparsa.
+-- No se almacena nombre, DNI, email ni teléfono.
+create table if not exists public.invitations (
+    id uuid primary key default gen_random_uuid(),
+    created_at timestamptz not null default now(),
+    token_hash text not null unique,
+    comparsa text,
+    used_at timestamptz
+);
+
+create index if not exists invitations_token_hash_idx on public.invitations (token_hash);
+create index if not exists invitations_used_at_idx on public.invitations (used_at);
+
+-- 3) Número de festeros invitados para calcular participación.
+create table if not exists public.comparsa_config (
+    comparsa text primary key,
+    invited_count integer not null default 0 check (invited_count >= 0),
+    updated_at timestamptz not null default now()
+);
+
+insert into public.comparsa_config (comparsa, invited_count)
+values
+('SULAYMAN', 0),
+('ALCANA', 0),
+('MAQUEDA', 0),
+('LANCEROS', 0),
+('ESTUDIANTES', 0),
+('ALJAU', 0),
+('CONTRABANDISTAS', 0),
+('FAUQUIES', 0)
+on conflict (comparsa) do nothing;
+
+-- 4) RLS: no damos acceso directo a anon/authenticated.
+alter table public.responses enable row level security;
+alter table public.invitations enable row level security;
+alter table public.comparsa_config enable row level security;
+
+-- El backend Streamlit usa la service key, que debe mantenerse SOLO en Secrets.
+-- No se crean políticas públicas de SELECT/INSERT para estas tablas.
+
+-- 5) Función atómica para guardar respuesta y consumir una invitación.
+-- Si p_token_hash es NULL, permite una respuesta pública normal.
+-- Si lleva token, lo bloquea con FOR UPDATE para impedir uso simultáneo.
+create or replace function public.submit_survey(
+    p_answers jsonb,
+    p_token_hash text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    v_response_id uuid;
+    v_invitation_id uuid;
+begin
+    if p_answers is null then
+        raise exception 'INVALID_ANSWERS';
+    end if;
+
+    if coalesce(p_answers->>'comparsa', '') = ''
+       or coalesce(p_answers->>'edad', '') = ''
+       or coalesce(p_answers->>'antiguedad', '') = ''
+       or coalesce(p_answers->>'cargo', '') = '' then
+        raise exception 'MISSING_REQUIRED_SEGMENTATION';
+    end if;
+
+    if p_token_hash is not null then
+        select id
+          into v_invitation_id
+          from public.invitations
+         where token_hash = p_token_hash
+           and used_at is null
+         for update;
+
+        if v_invitation_id is null then
+            raise exception 'INVALID_OR_USED_TOKEN';
+        end if;
+    end if;
+
+    insert into public.responses (comparsa, edad, antiguedad, cargo, answers)
+    values (
+        p_answers->>'comparsa',
+        p_answers->>'edad',
+        p_answers->>'antiguedad',
+        p_answers->>'cargo',
+        p_answers
+    )
+    returning id into v_response_id;
+
+    if v_invitation_id is not null then
+        update public.invitations
+           set used_at = now()
+         where id = v_invitation_id;
+    end if;
+
+    return v_response_id;
+end;
+$$;
+
+revoke all on function public.submit_survey(jsonb, text) from public;
+revoke all on function public.submit_survey(jsonb, text) from anon;
+revoke all on function public.submit_survey(jsonb, text) from authenticated;
+grant execute on function public.submit_survey(jsonb, text) to service_role;
+
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+
+from __future__ import annotations
+
+import hashlib
+import hmac
+import io
+import secrets as pysecrets
+from datetime import datetime
+from typing import Any
+
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+from supabase import Client, create_client
+
+# =============================================================
+# CONFIGURACIÓN GENERAL
+# =============================================================
+
+APP_TITLE = "Encuesta · Moros y Cristianos de Aspe 2026"
+ORG_NAME = "Unión de Moros y Cristianos Virgen de las Nieves · Junta Central"
+
+COMPARSAS = [
+    "SULAYMAN",
+    "ALCANA",
+    "MAQUEDA",
+    "LANCEROS",
+    "ESTUDIANTES",
+    "ALJAU",
+    "CONTRABANDISTAS",
+    "FAUQUIES",
+]
+
+EDADES = [
+    "Menos de 18 años",
+    "18–30 años",
+    "31–45 años",
+    "46–60 años",
+    "Más de 60 años",
+]
+
+ANTIGUEDADES = [
+    "Es mi primer año",
+    "2–5 años",
+    "6–10 años",
+    "11–20 años",
+    "Más de 20 años",
+]
+
+CARGOS = [
+    "No",
+    "Sí, cargo festero",
+    "Sí, responsabilidad en mi comparsa",
+    "Sí, responsabilidad en Junta Central",
+    "Otro",
+    "Prefiero no indicarlo",
+]
+
+ACTOS = {
+    "acto_presentacion": "Presentación de Cargos al Alcalde",
+    "acto_pregon": "Proclamación de Cargos y Pregón",
+    "acto_bandas": "Entrada de Bandas / Pasacalles Autoridades",
+    "acto_retreta": "Retreta",
+    "acto_pasacalles": "Pasacalles Festero",
+    "acto_entrada_mora": "Entrada Mora",
+    "acto_guerrilla": "Guerrilla",
+    "acto_residencia": "Pasacalle y desfile en Residencia de Ancianos",
+    "acto_misa": "Misa Festera",
+    "acto_embajada": "Embajada",
+    "acto_entrada_cristiana": "Entrada Cristiana",
+    "acto_premios": "Fallo Premios Miguel Iborra y Entrega de Banderas",
+}
+
+ACTOS_PREGUNTAS = {
+    "acto_presentacion": "Presentación de Cargos al Alcalde (mar. 4)",
+    "acto_pregon": "Proclamación de Cargos y Pregón (mar. 4)",
+    "acto_bandas": "Entrada de Bandas / Pasacalles Autoridades (vie. 7)",
+    "acto_retreta": "Retreta (vie. 7 noche)",
+    "acto_pasacalles": "Pasacalles Festero (sáb. 8)",
+    "acto_entrada_mora": "Entrada Mora (sáb. 8)",
+    "acto_guerrilla": "Guerrilla (dom. 9)",
+    "acto_residencia": "Pasacalle y desfile en Residencia de Ancianos (dom. 9)",
+    "acto_misa": "Misa Festera (dom. 9)",
+    "acto_embajada": "Embajada (dom. 9)",
+    "acto_entrada_cristiana": "Entrada Cristiana (lun. 10)",
+    "acto_premios": "Fallo Premios Miguel Iborra y Entrega de Banderas (lun. 10)",
+}
+
+ACTO_CHOICES = list(ACTOS.values()) + ["Ninguno en particular"]
+RATING_OPTIONS = ["1 · Muy mal", "2 · Mal", "3 · Regular", "4 · Bien", "5 · Muy bien", "No asistí / No puedo valorarlo"]
+
+TOTAL_STEPS = 12
+
+st.set_page_config(page_title=APP_TITLE, page_icon="⚔️", layout="wide", initial_sidebar_state="collapsed")
+
+# =============================================================
+# ESTILO
+# =============================================================
+
+CSS = """
+<style>
+:root {
+    --wine: #641f2a;
+    --wine-dark: #43121a;
+    --gold: #c5a15a;
+    --cream: #fbf8f2;
+    --ink: #24201d;
+    --muted: #6f685f;
+    --line: #e8dfd2;
+}
+.stApp {
+    background: linear-gradient(180deg, #fcfaf7 0%, #f7f1e7 100%);
+    color: var(--ink);
+}
+.block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 3rem;
+}
+.survey-shell {
+    max-width: 780px;
+    margin: 0 auto;
+}
+.hero {
+    background: linear-gradient(135deg, var(--wine-dark), var(--wine));
+    color: white;
+    border-radius: 24px;
+    padding: 30px 30px 26px 30px;
+    box-shadow: 0 18px 42px rgba(67,18,26,.18);
+    border: 1px solid rgba(197,161,90,.45);
+    margin-bottom: 22px;
+}
+.hero .eyebrow {
+    font-size: .78rem;
+    letter-spacing: .15em;
+    font-weight: 700;
+    color: #ead7ab;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.hero h1 {
+    color: white;
+    margin: 0 0 6px 0;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    line-height: 1.02;
+}
+.hero p {
+    color: #f7efe5;
+    margin: 8px 0 0 0;
+    line-height: 1.55;
+}
+.card {
+    background: rgba(255,255,255,.92);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 22px 22px 18px 22px;
+    box-shadow: 0 8px 30px rgba(65,49,34,.06);
+    margin-bottom: 16px;
+}
+.section-kicker {
+    color: var(--wine);
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-size: .77rem;
+}
+.small-muted { color: var(--muted); font-size: .92rem; }
+.privacy-note {
+    background: #f8f2e8;
+    border-left: 4px solid var(--gold);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #53493f;
+    margin: 10px 0 16px 0;
+}
+.thanks {
+    text-align: center;
+    background: white;
+    border-radius: 24px;
+    padding: 44px 30px;
+    border: 1px solid var(--line);
+    box-shadow: 0 14px 40px rgba(65,49,34,.08);
+}
+.thanks .big { font-size: 3rem; }
+.metric-card {
+    border: 1px solid var(--line);
+    background: white;
+    border-radius: 18px;
+    padding: 16px;
+    min-height: 110px;
+}
+div[data-testid="stMetric"] {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 6px 22px rgba(65,49,34,.04);
+}
+.stButton > button, .stDownloadButton > button {
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+}
+.stButton > button[kind="primary"] {
+    background: var(--wine) !important;
+    border-color: var(--wine) !important;
+}
+hr { border-color: var(--line) !important; }
+@media (max-width: 700px) {
+    .block-container { padding-left: 1rem; padding-right: 1rem; padding-top: .8rem; }
+    .hero { padding: 24px 20px; border-radius: 18px; }
+    .card { padding: 18px 16px; border-radius: 16px; }
+}
+</style>
+"""
+st.markdown(CSS, unsafe_allow_html=True)
+
+# =============================================================
+# UTILIDADES DE CONFIGURACIÓN / DB
+# =============================================================
+
+def secret_value(name: str, default: Any = None) -> Any:
+    try:
+        return st.secrets[name]
+    except Exception:
+        return default
+
+
+def is_demo_mode() -> bool:
+    explicit = secret_value("DEMO_MODE", None)
+    if explicit is not None:
+        return bool(explicit)
+    return not (secret_value("SUPABASE_URL") and secret_value("SUPABASE_SERVICE_KEY"))
+
+
+@st.cache_resource
+def get_supabase() -> Client | None:
+    url = secret_value("SUPABASE_URL")
+    key = secret_value("SUPABASE_SERVICE_KEY")
+    if not url or not key:
+        return None
+    return create_client(url, key)
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def normalize_rating(value: str | None) -> int | None:
+    if not value or value.startswith("No asistí"):
+        return None
+    try:
+        return int(value.split("·", 1)[0].strip())
+    except Exception:
+        return None
+
+
+def validate_invite(raw_token: str | None) -> tuple[bool, str | None, str | None]:
+    """Devuelve (válido, comparsa_prefijada, mensaje_error)."""
+    require_token = bool(secret_value("REQUIRE_INVITE_TOKEN", False))
+    if not require_token:
+        return True, None, None
+    if not raw_token:
+        return False, None, "Este enlace no contiene una invitación válida."
+    sb = get_supabase()
+    if sb is None:
+        return False, None, "La base de datos todavía no está configurada."
+    try:
+        res = (
+            sb.table("invitations")
+            .select("comparsa,used_at")
+            .eq("token_hash", hash_token(raw_token))
+            .limit(1)
+            .execute()
+        )
+        if not res.data:
+            return False, None, "La invitación no es válida."
+        row = res.data[0]
+        if row.get("used_at"):
+            return False, row.get("comparsa"), "Esta invitación ya ha sido utilizada."
+        return True, row.get("comparsa"), None
+    except Exception:
+        return False, None, "No se ha podido comprobar la invitación."
+
+
+def submit_response(answers: dict[str, Any], raw_token: str | None) -> tuple[bool, str]:
+    if is_demo_mode():
+        st.session_state.setdefault("demo_submissions", [])
+        st.session_state.demo_submissions.append({
+            "id": f"demo-{len(st.session_state.demo_submissions)+1}",
+            "created_at": datetime.now().isoformat(),
+            "comparsa": answers.get("comparsa"),
+            "edad": answers.get("edad"),
+            "antiguedad": answers.get("antiguedad"),
+            "cargo": answers.get("cargo"),
+            "answers": answers,
+        })
+        return True, "Respuesta guardada en esta sesión de demostración."
+
+    sb = get_supabase()
+    if sb is None:
+        return False, "Supabase no está configurado."
+    try:
+        token_hash = hash_token(raw_token) if raw_token else None
+        result = sb.rpc(
+            "submit_survey",
+            {"p_answers": answers, "p_token_hash": token_hash},
+        ).execute()
+        if result.data:
+            return True, "Respuesta registrada correctamente."
+        return True, "Respuesta registrada correctamente."
+    except Exception as exc:
+        text = str(exc)
+        if "INVALID_OR_USED_TOKEN" in text:
+            return False, "La invitación ya se ha utilizado o no es válida."
+        return False, "No se ha podido guardar la respuesta. Revisa la configuración de Supabase."
+
+
+def fetch_all_responses() -> pd.DataFrame:
+    if is_demo_mode():
+        base = make_demo_data(240)
+        extras = st.session_state.get("demo_submissions", [])
+        if extras:
+            extra_df = flatten_rows(extras)
+            base = pd.concat([base, extra_df], ignore_index=True)
+        return base
+
+    sb = get_supabase()
+    if sb is None:
+        return pd.DataFrame()
+    rows: list[dict[str, Any]] = []
+    start = 0
+    chunk = 1000
+    while True:
+        res = (
+            sb.table("responses")
+            .select("id,created_at,comparsa,edad,antiguedad,cargo,answers")
+            .order("created_at", desc=True)
+            .range(start, start + chunk - 1)
+            .execute()
+        )
+        data = res.data or []
+        rows.extend(data)
+        if len(data) < chunk:
+            break
+        start += chunk
+        if start >= 20000:
+            break
+    return flatten_rows(rows)
+
+
+def flatten_rows(rows: list[dict[str, Any]]) -> pd.DataFrame:
+    flat: list[dict[str, Any]] = []
+    for row in rows:
+        ans = row.get("answers") or {}
+        record = {
+            "id": row.get("id"),
+            "created_at": row.get("created_at"),
+            **ans,
+        }
+        for key in ["comparsa", "edad", "antiguedad", "cargo"]:
+            if not record.get(key):
+                record[key] = row.get(key)
+        flat.append(record)
+    return pd.DataFrame(flat)
+
+
+def make_demo_data(n: int = 240) -> pd.DataFrame:
+    rng = np.random.default_rng(2026)
+    evoluciones = ["Han mejorado mucho", "Han mejorado", "Se mantienen aproximadamente igual", "Han empeorado", "Han empeorado mucho", "No puedo valorarlo"]
+    cantidad = ["Hay demasiados actos", "La cantidad de actos es adecuada", "Se podrían añadir más actos", "No tengo una opinión clara"]
+    pulsera_utilidad = ["Sí, totalmente", "En parte", "No, me generó problemas o inconvenientes"]
+    pasacalles = ["Prefiero que pase a celebrarse el día 7", "Prefiero que se mantenga el día 8", "Me resulta indiferente"]
+    media = ["Sí, me parece una buena propuesta", "No, prefiero que se mantenga el formato actual", "Me resulta indiferente"]
+    comments = [
+        "Mejoraría la coordinación de horarios.",
+        "Muy buen ambiente durante los desfiles.",
+        "Revisaría algunos tiempos de espera.",
+        "Mantendría la estructura general de las fiestas.",
+        "Me gustaría más información previa de cada acto.",
+        "",
+        "",
+        "",
+    ]
+    records = []
+    for i in range(n):
+        used = bool(rng.random() < 0.78)
+        record = {
+            "id": f"demo-{i+1}",
+            "created_at": (pd.Timestamp("2026-08-18 10:00") + pd.Timedelta(minutes=int(i * 6))).isoformat(),
+            "comparsa": rng.choice(COMPARSAS),
+            "edad": rng.choice(EDADES, p=[0.05, 0.23, 0.32, 0.28, 0.12]),
+            "antiguedad": rng.choice(ANTIGUEDADES, p=[0.06, 0.15, 0.19, 0.28, 0.32]),
+            "cargo": rng.choice(CARGOS, p=[0.59, 0.13, 0.12, 0.05, 0.04, 0.07]),
+            "cargo_otro": "" if rng.random() < 0.9 else "Colaborador/a",
+            "valoracion_general": int(rng.choice([1, 2, 3, 4, 5], p=[0.03, 0.08, 0.22, 0.42, 0.25])),
+            "evolucion": rng.choice(evoluciones, p=[0.08, 0.32, 0.37, 0.13, 0.03, 0.07]),
+            "acto_destaca": rng.choice(ACTO_CHOICES),
+            "acto_destaca_por_que": rng.choice(comments),
+            "acto_mejorar": rng.choice(ACTO_CHOICES),
+            "acto_mejorar_que_cambiarias": rng.choice(comments),
+            "cantidad_actos": rng.choice(cantidad, p=[0.14, 0.68, 0.08, 0.10]),
+            "pulsera_usada": used,
+            "pulsera_utilidad": rng.choice(pulsera_utilidad, p=[0.64, 0.29, 0.07]) if used else None,
+            "pulsera_valoracion": int(rng.choice([1,2,3,4,5], p=[0.03,0.08,0.18,0.42,0.29])) if used else None,
+            "pulsera_mejoras": rng.choice(comments) if used else "",
+            "pasacalles_preferencia": rng.choice(pasacalles, p=[0.47, 0.38, 0.15]),
+            "pasacalles_motivo": rng.choice(comments),
+            "media_fiesta_preferencia": rng.choice(media, p=[0.57, 0.27, 0.16]),
+            "media_fiesta_comentarios": rng.choice(comments),
+            "recomendacion": int(rng.choice(range(11), p=[0.01,0.01,0.01,0.02,0.03,0.05,0.07,0.12,0.20,0.24,0.24])),
+            "mejoras_2027": rng.choice(comments),
+            "comentario_final": rng.choice(comments),
+        }
+        for key in ACTOS:
+            if rng.random() < 0.12:
+                record[key] = None
+            else:
+                record[key] = int(rng.choice([1,2,3,4,5], p=[0.03,0.08,0.20,0.42,0.27]))
+        records.append(record)
+    return pd.DataFrame(records)
+
+
+def get_invited_counts() -> dict[str, int]:
+    if is_demo_mode():
+        return {c: 500 for c in COMPARSAS}
+    sb = get_supabase()
+    if sb is None:
+        return {c: 0 for c in COMPARSAS}
+    try:
+        res = sb.table("comparsa_config").select("comparsa,invited_count").execute()
+        counts = {c: 0 for c in COMPARSAS}
+        for row in res.data or []:
+            if row.get("comparsa") in counts:
+                counts[row["comparsa"]] = int(row.get("invited_count") or 0)
+        return counts
+    except Exception:
+        return {c: 0 for c in COMPARSAS}
+
+
+def save_invited_counts(counts: dict[str, int]) -> tuple[bool, str]:
+    if is_demo_mode():
+        st.session_state["demo_invited_counts"] = counts
+        return True, "Configuración guardada para esta sesión."
+    sb = get_supabase()
+    if sb is None:
+        return False, "Supabase no está configurado."
+    try:
+        payload = [{"comparsa": c, "invited_count": int(counts.get(c, 0))} for c in COMPARSAS]
+        sb.table("comparsa_config").upsert(payload, on_conflict="comparsa").execute()
+        return True, "Número de festeros invitados actualizado."
+    except Exception:
+        return False, "No se ha podido guardar la configuración."
+
+
+def create_invite_links(comparsa: str, quantity: int, base_url: str) -> tuple[bool, pd.DataFrame | None, str]:
+    if quantity <= 0:
+        return False, None, "Indica un número de enlaces mayor que cero."
+    if is_demo_mode():
+        rows = []
+        for _ in range(quantity):
+            token = pysecrets.token_urlsafe(24)
+            rows.append({"comparsa": comparsa, "enlace": f"{base_url.rstrip('/')}?t={token}"})
+        return True, pd.DataFrame(rows), "Enlaces de demostración generados."
+
+    sb = get_supabase()
+    if sb is None:
+        return False, None, "Supabase no está configurado."
+    try:
+        raw_tokens = [pysecrets.token_urlsafe(24) for _ in range(quantity)]
+        payload = [{"token_hash": hash_token(t), "comparsa": comparsa} for t in raw_tokens]
+        # Inserciones por lotes para no enviar cuerpos demasiado grandes.
+        for start in range(0, len(payload), 500):
+            sb.table("invitations").insert(payload[start:start+500]).execute()
+        links = [{"comparsa": comparsa, "enlace": f"{base_url.rstrip('/')}?t={t}"} for t in raw_tokens]
+        return True, pd.DataFrame(links), "Enlaces únicos creados. El token original no se guarda en la base de datos."
+    except Exception:
+        return False, None, "No se han podido crear los enlaces."
+
+# =============================================================
+# ENCUESTA PÚBLICA
+# =============================================================
+
+def survey_header(step: int | None = None) -> None:
+    st.markdown('<div class="survey-shell">', unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="hero">
+            <div class="eyebrow">Encuesta de satisfacción</div>
+            <h1>Fiestas de Moros y Cristianos de Aspe 2026</h1>
+            <p>{ORG_NAME}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if step is not None and step > 0:
+        st.progress(step / TOTAL_STEPS, text=f"Paso {step} de {TOTAL_STEPS}")
+
+
+def survey_footer() -> None:
+    st.markdown("---")
+    st.markdown(
+        '<div class="small-muted" style="text-align:center">Encuesta anónima · Los resultados son de uso interno de la Junta Central</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div style="text-align:center;margin-top:10px"><a href="?view=admin">Acceso Junta Directiva</a></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def init_survey_state() -> None:
+    st.session_state.setdefault("survey_step", 0)
+    st.session_state.setdefault("survey_done", False)
+
+
+def nav_buttons(previous: bool = True, next_label: str = "Siguiente", disabled: bool = False) -> tuple[bool, bool]:
+    col1, col2 = st.columns([1, 1])
+    back_clicked = False
+    next_clicked = False
+    with col1:
+        if previous:
+            back_clicked = st.button("← Anterior", use_container_width=True)
+    with col2:
+        next_clicked = st.button(next_label, type="primary", use_container_width=True, disabled=disabled)
+    return back_clicked, next_clicked
+
+
+def render_survey() -> None:
+    init_survey_state()
+    raw_token = st.query_params.get("t")
+    valid, locked_comparsa, token_error = validate_invite(raw_token)
+
+    if not valid:
+        survey_header()
+        st.error(token_error or "Invitación no válida.")
+        st.info("Si has recibido este enlace por email, comprueba que lo has abierto completo. Si el problema continúa, solicita un nuevo enlace a la organización.")
+        survey_footer()
+        return
+
+    if st.session_state.survey_done:
+        survey_header()
+        st.markdown(
+            f"""
+            <div class="thanks">
+                <div class="big">✓</div>
+                <h2>¡Muchas gracias por tu participación!</h2>
+                <p>Tu respuesta ha quedado registrada.</p>
+                <p>Gracias por dedicar unos minutos a ayudarnos a seguir mejorando las Fiestas de Moros y Cristianos de Aspe.</p>
+                <p><strong>{ORG_NAME}</strong></p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        survey_footer()
+        return
+
+    step = int(st.session_state.survey_step)
+    survey_header(step if step else None)
+
+    if step == 0:
+        st.markdown(
+            """
+            <div class="card">
+                <div class="section-kicker">Bienvenida</div>
+                <h2>Tu opinión nos ayuda a mejorar</h2>
+                <p>Queremos conocer tu valoración sobre los actos celebrados en 2026 y tu opinión sobre posibles cambios de cara a 2027.</p>
+                <div class="privacy-note"><strong>La encuesta es anónima.</strong> No se solicita nombre, email, DNI ni teléfono. Los comentarios abiertos son opcionales.</div>
+                <p class="small-muted">Duración aproximada: 5–7 minutos.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("COMENZAR ENCUESTA", type="primary", use_container_width=True):
+            st.session_state.survey_step = 1
+            st.rerun()
+
+    elif step == 1:
+        st.markdown('<div class="section-kicker">1 · Datos generales</div><h2>Perfil festero</h2>', unsafe_allow_html=True)
+        if locked_comparsa and locked_comparsa in COMPARSAS:
+            st.session_state["comparsa"] = locked_comparsa
+            st.info(f"Comparsa de la invitación: **{locked_comparsa}**")
+        else:
+            st.selectbox("¿A qué comparsa perteneces? *", COMPARSAS, key="comparsa", index=None, placeholder="Selecciona tu comparsa")
+        st.selectbox("¿Cuál es tu rango de edad? *", EDADES, key="edad", index=None, placeholder="Selecciona una opción")
+        st.selectbox("¿Cuántos años llevas participando en las Fiestas? *", ANTIGUEDADES, key="antiguedad", index=None, placeholder="Selecciona una opción")
+        st.selectbox("¿Has desempeñado algún cargo o responsabilidad festera durante las Fiestas 2026? *", CARGOS, key="cargo", index=None, placeholder="Selecciona una opción")
+        if st.session_state.get("cargo") == "Otro":
+            st.text_input("Si quieres, indica cuál", key="cargo_otro")
+        back, nxt = nav_buttons()
+        if back:
+            st.session_state.survey_step = 0
+            st.rerun()
+        if nxt:
+            required = [st.session_state.get("comparsa"), st.session_state.get("edad"), st.session_state.get("antiguedad"), st.session_state.get("cargo")]
+            if not all(required):
+                st.error("Completa las preguntas obligatorias para continuar.")
+            else:
+                st.session_state.survey_step = 2
+                st.rerun()
+
+    elif step == 2:
+        st.markdown('<div class="section-kicker">2 · Valoración general</div><h2>¿Cómo han sido las Fiestas 2026?</h2>', unsafe_allow_html=True)
+        st.radio(
+            "En una escala del 1 al 5, ¿cómo valorarías el desarrollo general de las Fiestas 2026? *",
+            [1, 2, 3, 4, 5],
+            horizontal=True,
+            key="valoracion_general",
+            index=None,
+            captions=["Muy mal", "Mal", "Regular", "Bien", "Muy bien"],
+        )
+        st.selectbox(
+            "Pensando en años anteriores, ¿cómo consideras que han evolucionado las Fiestas? *",
+            ["Han mejorado mucho", "Han mejorado", "Se mantienen aproximadamente igual", "Han empeorado", "Han empeorado mucho", "No puedo valorarlo"],
+            key="evolucion",
+            index=None,
+            placeholder="Selecciona una opción",
+        )
+        back, nxt = nav_buttons()
+        if back:
+            st.session_state.survey_step = 1
+            st.rerun()
+        if nxt:
+            if st.session_state.get("valoracion_general") is None or not st.session_state.get("evolucion"):
+                st.error("Completa las dos preguntas para continuar.")
+            else:
+                st.session_state.survey_step = 3
+                st.rerun()
+
+    elif step in [3, 4, 5, 6]:
+        groups = {
+            3: ["acto_presentacion", "acto_pregon", "acto_bandas"],
+            4: ["acto_retreta", "acto_pasacalles", "acto_entrada_mora"],
+            5: ["acto_guerrilla", "acto_residencia", "acto_misa"],
+            6: ["acto_embajada", "acto_entrada_cristiana", "acto_premios"],
+        }
+        st.markdown(f'<div class="section-kicker">3 · Valoración de los actos</div><h2>Actos · {step-2}/4</h2>', unsafe_allow_html=True)
+        st.caption("Valora del 1 al 5. Si no asististe o no puedes valorarlo, elige la última opción. Esa respuesta no se contará como cero.")
+        for key in groups[step]:
+            st.selectbox(ACTOS_PREGUNTAS[key] + " *", RATING_OPTIONS, key=key + "_ui", index=None, placeholder="Selecciona tu valoración")
+        back, nxt = nav_buttons()
+        if back:
+            st.session_state.survey_step = step - 1
+            st.rerun()
+        if nxt:
+            if any(st.session_state.get(k + "_ui") is None for k in groups[step]):
+                st.error("Valora los tres actos para continuar.")
+            else:
+                for k in groups[step]:
+                    st.session_state[k] = normalize_rating(st.session_state.get(k + "_ui"))
+                st.session_state.survey_step = step + 1
+                st.rerun()
+
+    elif step == 7:
+        st.markdown('<div class="section-kicker">3 · Conclusiones sobre los actos</div><h2>¿Qué destacarías y qué revisarías?</h2>', unsafe_allow_html=True)
+        st.selectbox("¿Qué acto destacarías especialmente de forma positiva? *", ACTO_CHOICES, key="acto_destaca", index=None, placeholder="Selecciona una opción")
+        st.text_area("Si quieres, cuéntanos brevemente por qué", key="acto_destaca_por_que", height=100)
+        st.selectbox("¿Qué acto consideras que debería revisarse o mejorarse especialmente? *", ACTO_CHOICES, key="acto_mejorar", index=None, placeholder="Selecciona una opción")
+        st.text_area("Si quieres, dinos qué cambiarías", key="acto_mejorar_que_cambiarias", height=100)
+        st.selectbox(
+            "Pensando en el conjunto de las Fiestas, ¿qué opinas de la cantidad de actos? *",
+            ["Hay demasiados actos", "La cantidad de actos es adecuada", "Se podrían añadir más actos", "No tengo una opinión clara"],
+            key="cantidad_actos",
+            index=None,
+            placeholder="Selecciona una opción",
+        )
+        back, nxt = nav_buttons()
+        if back:
+            st.session_state.survey_step = 6
+            st.rerun()
+        if nxt:
+            if not st.session_state.get("acto_destaca") or not st.session_state.get("acto_mejorar") or not st.session_state.get("cantidad_actos"):
+                st.error("Completa las preguntas obligatorias para continuar.")
+            else:
+                st.session_state.survey_step = 8
+                st.rerun()
+
+    elif step == 8:
+        st.markdown('<div class="section-kicker">4 · Pulsera festera</div><h2>Uso y valoración de la pulsera</h2>', unsafe_allow_html=True)
+        st.radio("¿Utilizaste la pulsera festera durante las Fiestas 2026? *", ["Sí", "No"], horizontal=True, key="pulsera_usada_ui", index=None)
+        if st.session_state.get("pulsera_usada_ui") == "Sí":
+            st.selectbox(
+                "¿Te resultó útil y práctica para el control de accesos, identificación, etc.? *",
+                ["Sí, totalmente", "En parte", "No, me generó problemas o inconvenientes"],
+                key="pulsera_utilidad",
+                index=None,
+                placeholder="Selecciona una opción",
+            )
+            st.radio("En una escala del 1 al 5, ¿cómo valorarías la pulsera festera en general? *", [1,2,3,4,5], horizontal=True, key="pulsera_valoracion", index=None)
+            st.text_area("¿Qué mejorarías de la pulsera festera?", key="pulsera_mejoras", help="Material, proceso de entrega, funcionalidad, accesos u otros aspectos.", height=100)
+        back, nxt = nav_buttons()
+        if back:
+            st.session_state.survey_step = 7
+            st.rerun()
+        if nxt:
+            used_ui = st.session_state.get("pulsera_usada_ui")
+            if used_ui is None:
+                st.error("Indica si utilizaste la pulsera.")
+            elif used_ui == "Sí" and (not st.session_state.get("pulsera_utilidad") or st.session_state.get("pulsera_valoracion") is None):
+                st.error("Completa la valoración de la pulsera para continuar.")
+            else:
+                st.session_state["pulsera_usada"] = used_ui == "Sí"
+                if used_ui == "No":
+                    st.session_state["pulsera_utilidad"] = None
+                    st.session_state["pulsera_valoracion"] = None
+                    st.session_state["pulsera_mejoras"] = ""
+                st.session_state.survey_step = 9
+                st.rerun()
+
+    elif step == 9:
+        st.markdown('<div class="section-kicker">5 · Pasacalles Festero</div><h2>Posible cambio de día</h2>', unsafe_allow_html=True)
+        st.info("Actualmente el Pasacalles Festero se celebra el sábado 8 de agosto. Se plantea la posibilidad de trasladarlo al viernes 7 de agosto.")
+        st.radio(
+            "¿Qué opción prefieres? *",
+            ["Prefiero que pase a celebrarse el día 7", "Prefiero que se mantenga el día 8", "Me resulta indiferente"],
+            key="pasacalles_preferencia",
+            index=None,
+        )
+        st.text_area("Si quieres, explica brevemente el motivo de tu respuesta", key="pasacalles_motivo", height=110)
+        back, nxt = nav_buttons()
+        if back:
+            st.session_state.survey_step = 8
+            st.rerun()
+        if nxt:
+            if not st.session_state.get("pasacalles_preferencia"):
+                st.error("Selecciona una opción para continuar.")
+            else:
+                st.session_state.survey_step = 10
+                st.rerun()
+
+    elif step == 10:
+        st.markdown('<div class="section-kicker">6 · Media Fiesta 2027</div><h2>Propuesta de dos días</h2>', unsafe_allow_html=True)
+        st.info("Se está valorando organizar la Media Fiesta 2027 así: Día 1 por la noche, Retreta. Día 2, Pasacalles y Entrada de Bandas.")
+        st.radio(
+            "¿Te gustaría que la Media Fiesta 2027 se organizara de este modo, en dos días? *",
+            ["Sí, me parece una buena propuesta", "No, prefiero que se mantenga el formato actual", "Me resulta indiferente"],
+            key="media_fiesta_preferencia",
+            index=None,
+        )
+        st.text_area("Sugerencias o comentarios sobre la Media Fiesta 2027", key="media_fiesta_comentarios", height=110)
+        back, nxt = nav_buttons()
+        if back:
+            st.session_state.survey_step = 9
+            st.rerun()
+        if nxt:
+            if not st.session_state.get("media_fiesta_preferencia"):
+                st.error("Selecciona una opción para continuar.")
+            else:
+                st.session_state.survey_step = 11
+                st.rerun()
+
+    elif step == 11:
+        st.markdown('<div class="section-kicker">7 · Mirando al futuro</div><h2>Valoración final</h2>', unsafe_allow_html=True)
+        st.slider(
+            "De 0 a 10, ¿hasta qué punto recomendarías a otro festero participar activamente en las Fiestas de Moros y Cristianos de Aspe? *",
+            0, 10, key="recomendacion",
+        )
+        st.text_area(
+            "¿Qué mejorarías de cara a las Fiestas 2027?",
+            key="mejoras_2027",
+            help="Puedes hablarnos de actos, horarios, organización, desfiles, pulsera, convivencia, servicios o cualquier otro aspecto que consideres importante.",
+            height=125,
+        )
+        st.text_area("¿Hay alguna propuesta o comentario que no te hayamos preguntado y quieras trasladar a la Junta Central?", key="comentario_final", height=125)
+        back, nxt = nav_buttons(next_label="ENVIAR ENCUESTA")
+        if back:
+            st.session_state.survey_step = 10
+            st.rerun()
+        if nxt:
+            answers = collect_answers()
+            ok, msg = submit_response(answers, raw_token)
+            if ok:
+                st.session_state.survey_done = True
+                st.session_state.survey_step = TOTAL_STEPS
+                st.rerun()
+            else:
+                st.error(msg)
+
+    survey_footer()
+
+
+def collect_answers() -> dict[str, Any]:
+    keys = [
+        "comparsa", "edad", "antiguedad", "cargo", "cargo_otro",
+        "valoracion_general", "evolucion",
+        *ACTOS.keys(),
+        "acto_destaca", "acto_destaca_por_que", "acto_mejorar", "acto_mejorar_que_cambiarias", "cantidad_actos",
+        "pulsera_usada", "pulsera_utilidad", "pulsera_valoracion", "pulsera_mejoras",
+        "pasacalles_preferencia", "pasacalles_motivo",
+        "media_fiesta_preferencia", "media_fiesta_comentarios",
+        "recomendacion", "mejoras_2027", "comentario_final",
+    ]
+    return {k: st.session_state.get(k) for k in keys}
+
+# =============================================================
+# ADMIN / PANEL
+# =============================================================
+
+def admin_authenticated() -> bool:
+    return bool(st.session_state.get("admin_authenticated"))
+
+
+def render_admin_login() -> bool:
+    st.markdown("## Acceso Junta Directiva")
+    st.caption("Área privada de resultados y gestión de la encuesta.")
+    with st.form("admin_login"):
+        user = st.text_input("Usuario")
+        password = st.text_input("Contraseña", type="password")
+        submitted = st.form_submit_button("Entrar", type="primary", use_container_width=True)
+    if submitted:
+        expected_user = str(secret_value("ADMIN_USER", "junta"))
+        expected_password = str(secret_value("ADMIN_PASSWORD", "demo2026"))
+        if hmac.compare_digest(user, expected_user) and hmac.compare_digest(password, expected_password):
+            st.session_state.admin_authenticated = True
+            st.rerun()
+        else:
+            st.error("Usuario o contraseña incorrectos.")
+    if is_demo_mode():
+        st.info("Modo demostración: usuario **junta** · contraseña **demo2026** (salvo que lo cambies en secrets).")
+    return False
+
+
+def apply_filters(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
+    st.sidebar.markdown("### Filtros")
+    selected = {}
+    for label, col, options in [
+        ("Comparsa", "comparsa", COMPARSAS),
+        ("Edad", "edad", EDADES),
+        ("Antigüedad", "antiguedad", ANTIGUEDADES),
+        ("Cargo / responsabilidad", "cargo", CARGOS),
+    ]:
+        value = st.sidebar.selectbox(label, ["TODAS"] + options, key=f"f_{col}")
+        selected[col] = value
+    out = df.copy()
+    for col, value in selected.items():
+        if value != "TODAS" and col in out.columns:
+            out = out[out[col] == value]
+    return out, selected
+
+
+def safe_pct(series: pd.Series, predicate=None) -> float:
+    s = series.dropna()
+    if len(s) == 0:
+        return 0.0
+    if predicate is None:
+        return float(s.mean() * 100)
+    return float(predicate(s).mean() * 100)
+
+
+def nps_score(series: pd.Series) -> float:
+    s = pd.to_numeric(series, errors="coerce").dropna()
+    if len(s) == 0:
+        return 0.0
+    promoters = (s >= 9).mean() * 100
+    detractors = (s <= 6).mean() * 100
+    return float(promoters - detractors)
+
+
+def donut_chart(df: pd.DataFrame, col: str, title: str):
+    counts = df[col].fillna("Sin respuesta").value_counts().reset_index()
+    counts.columns = ["Respuesta", "Respuestas"]
+    fig = px.pie(counts, names="Respuesta", values="Respuestas", hole=.55, title=title)
+    fig.update_layout(margin=dict(t=55, b=15, l=15, r=15), legend_title_text="")
+    return fig
+
+
+def render_admin() -> None:
+    st.markdown('<div style="max-width:1400px;margin:0 auto">', unsafe_allow_html=True)
+    top1, top2 = st.columns([8, 2])
+    with top1:
+        st.markdown("# Panel · Junta Directiva")
+        st.caption("Encuesta de Satisfacción · Fiestas de Moros y Cristianos de Aspe 2026")
+    with top2:
+        st.markdown('<div style="text-align:right;margin-top:12px"><a href="?">← Ver encuesta</a></div>', unsafe_allow_html=True)
+
+    if not admin_authenticated():
+        render_admin_login()
+        st.markdown('</div>', unsafe_allow_html=True)
+        return
+
+    with st.sidebar:
+        st.markdown("## Junta Directiva")
+        if st.button("Cerrar sesión", use_container_width=True):
+            st.session_state.admin_authenticated = False
+            st.rerun()
+
+    df = fetch_all_responses()
+    if df.empty:
+        st.warning("Todavía no hay respuestas registradas.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        return
+
+    filtered, filters = apply_filters(df)
+    min_group = int(secret_value("MIN_GROUP_SIZE", 5))
+
+    if is_demo_mode():
+        st.info("Estás viendo **datos de demostración**. Cuando conectes Supabase, el panel mostrará las respuestas reales.")
+
+    # Métricas
+    st.markdown("### Resumen")
+    c1, c2, c3, c4, c5 = st.columns(5)
+    n = len(filtered)
+    with c1:
+        st.metric("Respuestas", f"{n:,}".replace(",", "."))
+    with c2:
+        avg = pd.to_numeric(filtered.get("valoracion_general"), errors="coerce").mean()
+        st.metric("Valoración general", "—" if pd.isna(avg) else f"{avg:.2f} / 5")
+    with c3:
+        nps = nps_score(filtered.get("recomendacion", pd.Series(dtype=float)))
+        st.metric("NPS", f"{nps:+.0f}")
+    with c4:
+        if "pulsera_usada" in filtered:
+            usage = safe_pct(filtered["pulsera_usada"])
+            st.metric("Uso pulsera", f"{usage:.1f} %")
+        else:
+            st.metric("Uso pulsera", "—")
+    with c5:
+        yes = (filtered.get("media_fiesta_preferencia", pd.Series(dtype=str)) == "Sí, me parece una buena propuesta").mean() * 100 if n else 0
+        st.metric("Media Fiesta · Sí", f"{yes:.1f} %")
+
+    if n < min_group:
+        st.warning(f"Por privacidad, con menos de {min_group} respuestas en el filtro seleccionado no se muestran gráficos detallados ni comentarios.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        return
+
+    tabs = st.tabs(["Visión general", "Actos", "Comparsas", "Comentarios", "Invitaciones", "Datos"])
+
+    with tabs[0]:
+        col1, col2 = st.columns(2)
+        with col1:
+            if "valoracion_general" in filtered:
+                rating_counts = filtered["valoracion_general"].value_counts().sort_index().reset_index()
+                rating_counts.columns = ["Valoración", "Respuestas"]
+                fig = px.bar(rating_counts, x="Valoración", y="Respuestas", title="Valoración general de las Fiestas")
+                fig.update_layout(margin=dict(t=55, b=20, l=20, r=20))
+                st.plotly_chart(fig, use_container_width=True)
+        with col2:
+            if "evolucion" in filtered:
+                st.plotly_chart(donut_chart(filtered, "evolucion", "Evolución respecto a años anteriores"), use_container_width=True)
+
+        col3, col4 = st.columns(2)
+        with col3:
+            if "pasacalles_preferencia" in filtered:
+                st.plotly_chart(donut_chart(filtered, "pasacalles_preferencia", "Preferencia del Pasacalles Festero"), use_container_width=True)
+        with col4:
+            if "media_fiesta_preferencia" in filtered:
+                st.plotly_chart(donut_chart(filtered, "media_fiesta_preferencia", "Media Fiesta 2027"), use_container_width=True)
+
+        if "cantidad_actos" in filtered:
+            st.plotly_chart(donut_chart(filtered, "cantidad_actos", "Cantidad de actos"), use_container_width=True)
+
+    with tabs[1]:
+        rows = []
+        for key, name in ACTOS.items():
+            if key not in filtered:
+                continue
+            vals = pd.to_numeric(filtered[key], errors="coerce")
+            valid_vals = vals.dropna()
+            rows.append({
+                "Acto": name,
+                "Valoración media": round(float(valid_vals.mean()), 2) if len(valid_vals) else np.nan,
+                "Asistencia declarada": round(float(valid_vals.notna().sum() / len(filtered) * 100), 1) if len(filtered) else 0,
+                "Respuestas que valoran": int(len(valid_vals)),
+            })
+        acts_df = pd.DataFrame(rows)
+        if not acts_df.empty:
+            fig = px.bar(acts_df.sort_values("Valoración media"), x="Valoración media", y="Acto", orientation="h", range_x=[0, 5], title="Valoración media por acto")
+            fig.update_layout(height=520, margin=dict(t=55, b=20, l=20, r=20))
+            st.plotly_chart(fig, use_container_width=True)
+
+            fig2 = px.bar(acts_df.sort_values("Asistencia declarada"), x="Asistencia declarada", y="Acto", orientation="h", range_x=[0, 100], title="Asistencia declarada por acto (%)")
+            fig2.update_layout(height=520, margin=dict(t=55, b=20, l=20, r=20))
+            st.plotly_chart(fig2, use_container_width=True)
+            st.dataframe(acts_df.sort_values("Valoración media", ascending=False), use_container_width=True, hide_index=True)
+
+    with tabs[2]:
+        invited = st.session_state.get("demo_invited_counts", get_invited_counts()) if is_demo_mode() else get_invited_counts()
+        rows = []
+        for c in COMPARSAS:
+            subset = df[df["comparsa"] == c] if "comparsa" in df else pd.DataFrame()
+            responses = len(subset)
+            invited_n = int(invited.get(c, 0))
+            participation = responses / invited_n * 100 if invited_n else np.nan
+            avg = pd.to_numeric(subset.get("valoracion_general"), errors="coerce").mean() if responses else np.nan
+            p7 = (subset.get("pasacalles_preferencia", pd.Series(dtype=str)) == "Prefiero que pase a celebrarse el día 7").mean() * 100 if responses else np.nan
+            mf = (subset.get("media_fiesta_preferencia", pd.Series(dtype=str)) == "Sí, me parece una buena propuesta").mean() * 100 if responses else np.nan
+            rows.append({"Comparsa": c, "Respuestas": responses, "Invitados": invited_n, "Participación %": participation, "Valoración general": avg, "Pasacalles día 7 %": p7, "Media Fiesta sí %": mf})
+        comp_df = pd.DataFrame(rows)
+        col1, col2 = st.columns(2)
+        with col1:
+            fig = px.bar(comp_df, x="Comparsa", y="Respuestas", title="Respuestas por comparsa")
+            st.plotly_chart(fig, use_container_width=True)
+        with col2:
+            fig = px.bar(comp_df.dropna(subset=["Valoración general"]), x="Comparsa", y="Valoración general", range_y=[0,5], title="Valoración general por comparsa")
+            st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(comp_df.round(2), use_container_width=True, hide_index=True)
+
+        with st.expander("Configurar número de festeros invitados por comparsa"):
+            st.caption("Sirve para calcular el porcentaje real de participación.")
+            new_counts = {}
+            cols = st.columns(2)
+            for i, c in enumerate(COMPARSAS):
+                with cols[i % 2]:
+                    new_counts[c] = st.number_input(c, min_value=0, max_value=10000, value=int(invited.get(c, 0)), step=1, key=f"invited_{c}")
+            if st.button("Guardar invitados", type="primary"):
+                ok, msg = save_invited_counts(new_counts)
+                (st.success if ok else st.error)(msg)
+
+    with tabs[3]:
+        comment_fields = {
+            "acto_destaca_por_que": "Motivo del acto destacado positivamente",
+            "acto_mejorar_que_cambiarias": "Qué cambiarían de los actos",
+            "pulsera_mejoras": "Mejoras de la pulsera",
+            "pasacalles_motivo": "Motivo sobre el día del Pasacalles",
+            "media_fiesta_comentarios": "Comentarios sobre Media Fiesta 2027",
+            "mejoras_2027": "Qué mejorarían de cara a 2027",
+            "comentario_final": "Otras propuestas y comentarios",
+        }
+        st.caption("Los comentarios se muestran sin nombre, email, DNI ni identificador personal.")
+        for field, title in comment_fields.items():
+            if field not in filtered:
+                continue
+            values = filtered[field].fillna("").astype(str).str.strip()
+            values = values[values != ""]
+            with st.expander(f"{title} · {len(values)} comentarios"):
+                if values.empty:
+                    st.caption("Sin comentarios en este apartado.")
+                else:
+                    for text in values.head(300):
+                        st.markdown(f"- {text}")
+
+    with tabs[4]:
+        st.markdown("### Enlaces únicos de un solo uso")
+        st.write("Puedes generar enlaces individuales sin guardar nombre, email ni DNI en la base de datos. Supabase solo guarda el **hash** del token y, opcionalmente, la comparsa.")
+        base_url = st.text_input("URL pública de la encuesta", value=str(secret_value("PUBLIC_APP_URL", "https://tu-encuesta.streamlit.app")))
+        col1, col2 = st.columns(2)
+        with col1:
+            comp = st.selectbox("Comparsa", COMPARSAS, key="invite_comp")
+        with col2:
+            qty = st.number_input("Número de enlaces", min_value=1, max_value=5000, value=10, step=1)
+        if st.button("Generar enlaces", type="primary"):
+            ok, links_df, msg = create_invite_links(comp, int(qty), base_url)
+            if ok and links_df is not None:
+                st.success(msg)
+                csv = links_df.to_csv(index=False).encode("utf-8-sig")
+                st.download_button("Descargar CSV con enlaces", data=csv, file_name=f"enlaces_{comp.lower()}_{datetime.now():%Y%m%d_%H%M}.csv", mime="text/csv")
+                st.dataframe(links_df.head(20), use_container_width=True, hide_index=True)
+                st.caption("Guarda el CSV descargado: los tokens originales no pueden recuperarse desde la base de datos.")
+            else:
+                st.error(msg)
+        if bool(secret_value("REQUIRE_INVITE_TOKEN", False)):
+            st.success("El acceso por invitación única está ACTIVADO.")
+        else:
+            st.info("El acceso por invitación única está DESACTIVADO. Para activarlo, cambia REQUIRE_INVITE_TOKEN = true en los secretos de Streamlit.")
+
+    with tabs[5]:
+        st.markdown("### Exportar resultados")
+        export_df = filtered.copy()
+        if "id" in export_df:
+            export_df = export_df.drop(columns=["id"])
+        csv = export_df.to_csv(index=False).encode("utf-8-sig")
+        st.download_button("Descargar resultados filtrados · CSV", data=csv, file_name=f"encuesta_aspe_2026_{datetime.now():%Y%m%d}.csv", mime="text/csv")
+        st.caption("El archivo no contiene nombre, DNI, email ni teléfono porque la encuesta no los solicita.")
+        with st.expander("Vista de datos"):
+            st.dataframe(export_df.head(500), use_container_width=True, hide_index=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# =============================================================
+# ROUTER
+# =============================================================
+
+view = st.query_params.get("view", "encuesta")
+if view == "admin":
+    render_admin()
+else:
+    render_survey()
