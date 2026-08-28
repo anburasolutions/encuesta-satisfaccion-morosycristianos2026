@@ -31,8 +31,6 @@ APP_TITLE = "Encuesta Moros y Cristianos Aspe 2026"
 ORG_NAME = "Unión de Moros y Cristianos Virgen de las Nieves · Junta Central"
 LOGO_PATH = "assets/escudo_union_moros_cristianos.jpg"
 COMPARSAS_BG_PATH = "assets/comparsa_background.png"
-SUPABASE_URL_PUBLIC = "https://ymssywbftlzdmbkcexee.supabase.co"
-SUPABASE_PUBLISHABLE_KEY = "sb_publishable_-JwoX59ktysEKiQQ6BeYeg__f1PiPNU"
 
 COMPARSAS = [
     "Moros Alcaná",
@@ -342,8 +340,8 @@ def secret_value(name: str, default: Any = None) -> Any:
 
 @st.cache_resource
 def get_supabase() -> Client | None:
-    url = secret_value("SUPABASE_URL", SUPABASE_URL_PUBLIC)
-    key = secret_value("SUPABASE_PUBLISHABLE_KEY", SUPABASE_PUBLISHABLE_KEY)
+    url = secret_value("SUPABASE_URL")
+    key = secret_value("SUPABASE_PUBLISHABLE_KEY")
     if not url or not key:
         return None
     return create_client(url, key)
